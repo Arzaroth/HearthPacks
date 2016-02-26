@@ -1,0 +1,7 @@
+{
+    "email": "email@domain.com",
+    "password": "password",
+    "--attempts": 10000,
+    "--score": 100000,
+    "--threshold": 150000
+}
