@@ -16,6 +16,7 @@ from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
 from hearthpacks import login, LoginError
 from hearthpacks import open_packs, save_pack, PackError
+from hearthpacks import Gui
 
 PRGM = "HearthPacks"
 
@@ -30,12 +31,13 @@ __doc__ = """
 {intro}
 
 Usage:
-  {prgm} [-nc FILE] [-v | -vv] [--attempts=<number>] [--score=<number>] [--threshold=<number>] [--low-threshold=<number>] [--wait=<seconds>]
+  {prgm} [-ngc FILE] [-v | -vv] [--attempts=<number>] [--score=<number>] [--threshold=<number>] [--low-threshold=<number>] [--wait=<seconds>]
   {prgm} -h
   {prgm} --version
 
 Options:
   -n, --anonymous                               Open and save packs as anonymous.
+  -g, --gui                                     Open in GUI mode.
   -c <file>, --config=<file>                    Path to configuration file, see Notes.
   -a <number>, --attempts=<number>              Number of attemps to get the best pack [default: 1000].
   -s <number>, --score=<number>                 Minimum score to consider pack [default: 25000].
@@ -80,6 +82,8 @@ if __name__ == '__main__':
     except (SchemaError, json.decoder.JSONDecodeError) as e:
         print('Error: %s' % (str(e)), file=sys.stderr)
     else:
+        if opts['--gui']:
+            sys.exit(Gui(opts).run())
         try:
             session = login(opts)
             pack = open_packs(opts, session)

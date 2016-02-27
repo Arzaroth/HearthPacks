@@ -6,6 +6,8 @@
 # arzaroth@arzaroth.com
 #
 
+from __future__ import absolute_import
+
 import signal
 
 class InterruptedHandlerGenerator(object):
