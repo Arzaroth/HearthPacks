@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import requests
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QWidget, QSizePolicy, QApplication,
+                             QProgressBar,
                              QLabel, QLineEdit, QPushButton, QCheckBox,
                              QVBoxLayout, QHBoxLayout, QMessageBox)
 from hearthpacks import login, LoginError
@@ -61,6 +62,10 @@ class LoginWidget(QWidget):
         loginLayout.addWidget(loginButton)
         loginLayout.addStretch(1)
 
+        self.loadingBar = QProgressBar()
+        self.loadingBar.setRange(0, 0)
+        self.loadingBar.hide()
+
         vbox = QVBoxLayout()
         vbox.addStretch(1)
         vbox.addWidget(label)
@@ -68,6 +73,7 @@ class LoginWidget(QWidget):
         vbox.addWidget(self.passwordEdit)
         vbox.addWidget(self.anonCheckbox)
         vbox.addLayout(loginLayout)
+        vbox.addWidget(self.loadingBar)
         vbox.addStretch(1)
 
         self.setLayout(vbox)
@@ -87,10 +93,12 @@ class LoginWidget(QWidget):
             self.loginThread.login(email, password, anonymous)
 
     def disable(self):
+        self.loadingBar()
         self.setEnabled(False)
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
     def restore(self):
+        self.loadingBar.show()
         self.setEnabled(True)
         QApplication.restoreOverrideCursor()
 
