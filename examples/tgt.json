@@ -1,7 +1,6 @@
 {
     "PACK_TYPE": "tgt",
-    "email": "email@domain.com",
-    "password": "password",
+    "--anonymous": true,
     "--attempts": 1000,
     "--score": 80000,
     "--threshold": 100000
