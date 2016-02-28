@@ -41,10 +41,13 @@ Returns a requests.Session object."""
     s.headers.update(HEADERS)
     if not opts['--anonymous']:
         r = s.get(LOGIN_FRONTPOINT)
-        email = input('Enter your email address: ') if not "email" in opts else opts["email"]
-        password = getpass.getpass('Enter your password: ') if not "password" in opts else opts["password"]
+        email = (opts["email"] if "email" in opts
+                 else input('Enter your email address: '))
+        password = (opts["password"] if "password" in opts
+                    else getpass.getpass('Enter your password: '))
         soup = BeautifulSoup(r.content, "html.parser")
-        hidden_fields = soup.find('div', class_='p-login-form').find('form').find_all('input', type='hidden')
+        hidden_fields = (soup.find('div', class_='p-login-form').find('form')
+                         .find_all('input', type='hidden'))
         params = [(i['name'], i['value']) for i in hidden_fields]
         params += [('username', email)]
         params += [('loginFormPassword', password)]

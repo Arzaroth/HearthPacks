@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (QWidget, QSizePolicy, QApplication,
                              QLabel, QLineEdit, QPushButton, QCheckBox,
                              QVBoxLayout, QHBoxLayout, QMessageBox)
 from hearthpacks import login, LoginError
-from hearthpacks.gui.menu import MenuWindow
+from hearthpacks.gui.menu import MenuWindow, LoadingOverlay
 
 class LoginWidget(QWidget):
     loginDone = QtCore.pyqtSignal(requests.Session)
@@ -25,6 +25,8 @@ class LoginWidget(QWidget):
         self.opts = opts
         self.initThread()
         self.initUI()
+        self.overlay = LoadingOverlay(self)
+        self.overlay.hide()
 
     def initThread(self):
         self.loginThread = LoginThread(self.opts)
@@ -92,13 +94,14 @@ class LoginWidget(QWidget):
         self.passwordEdit.setEnabled(False)
         self.anonCheckbox.setEnabled(False)
         self.loginButton.setEnabled(False)
+        self.overlay.show()
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
     def restore(self):
-        self.emailEdit.setEnabled(True)
-        self.passwordEdit.setEnabled(True)
+        self.checkboxClicked()
         self.anonCheckbox.setEnabled(True)
         self.loginButton.setEnabled(True)
+        self.overlay.hide()
         QApplication.restoreOverrideCursor()
 
     def loginSuccesfull(self, session):
@@ -108,6 +111,10 @@ class LoginWidget(QWidget):
     def loginFailed(self, error):
         self.restore()
         QMessageBox.critical(self, "Error", str(error))
+
+    def resizeEvent(self, event):
+        self.overlay.resize(event.size())
+        event.accept()
 
 
 class LoginWindow(MenuWindow):

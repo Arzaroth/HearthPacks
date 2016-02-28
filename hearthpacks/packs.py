@@ -19,7 +19,10 @@ try:
 except NameError:
     pass
 
-PACKS_FRONTPOINT = "http://www.hearthpwn.com/packs/simulator/1-hearthpwn-wild-pack"
+PACKS_FRONTPOINT = {
+    'wild': "http://www.hearthpwn.com/packs/simulator/1-hearthpwn-wild-pack",
+    'tgt': "http://www.hearthpwn.com/packs/simulator/2-hearthstone-tgt",
+}
 PACKS_ENDPOINT = "http://www.hearthpwn.com/packs/save"
 
 class PackError(Exception):
@@ -87,7 +90,7 @@ Raise a PackError if no pack is good enough."""
     best_pack = Pack()
     for i in InterruptedHandlerGenerator(range(1, opts['--attempts'] + 1)):
         try:
-            r = session.get(PACKS_FRONTPOINT, timeout=5)
+            r = session.get(PACKS_FRONTPOINT[opts['PACK_TYPE']], timeout=5)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             r = None
         pack = Pack(r)
@@ -95,7 +98,9 @@ Raise a PackError if no pack is good enough."""
             raise PackError("Unable to acquire pack", best_pack)
         if opts['--verbose'] >= 1:
             print('Pack #%d opened, score is: %d' % (i, pack.score))
-        if pack.score > best_pack.score and pack.score > opts['--score']:
+        if (opts['--score'] and
+            pack.score > best_pack.score and
+            pack.score > opts['--score']):
             submit_threshold(opts, best_pack, session, i)
             best_pack = pack
             if opts['--verbose'] >= 1:
@@ -106,15 +111,17 @@ Raise a PackError if no pack is good enough."""
             submit_low(opts, pack, session, i)
         time.sleep(opts['--wait'])
     if best_pack.score == 0:
-        raise PackError('No pack was above %d score' % (opts['--score']))
+        raise PackError('No pack was good enough')
     return best_pack
 
 def save_pack(opts, pack, session, title=None):
     """Save pack to HearthPwn.com using request.Session object retrieved from login.
 Returns the request.Request object of the saved pack."""
-    hidden_fields = pack.soup.find('form', class_='pack-save-form').find_all('input', type='hidden')
+    hidden_fields = (pack.soup.find('form', class_='pack-save-form')
+                     .find_all('input', type='hidden'))
     params = [(i['name'], i['value']) for i in hidden_fields]
-    title_tag = pack.soup.find('form', class_='pack-save-form').find('input', id='field-title')
+    title_tag = (pack.soup.find('form', class_='pack-save-form')
+                 .find('input', id='field-title'))
     if not title:
         title = input('Enter a title for the pack: ')
     params += [(title_tag['name'], title)]
@@ -122,7 +129,8 @@ Returns the request.Request object of the saved pack."""
         print('Save pack request params:')
         print(params)
     try:
-        r = session.post(PACKS_ENDPOINT, data=params, headers={'Referer': PACKS_FRONTPOINT}, timeout=5)
+        r = session.post(PACKS_ENDPOINT, data=params, timeout=5,
+                         headers={'Referer': PACKS_FRONTPOINT[opts['PACK_TYPE']]})
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         raise PackError("Unable to submit pack")
     if r:
