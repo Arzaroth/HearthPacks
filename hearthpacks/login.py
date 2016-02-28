@@ -53,8 +53,10 @@ Returns a requests.Session object."""
             print(params)
         r = s.post(LOGIN_ENDPOINT, data=params)
         if not 'User.ID' in s.cookies:
-            raise LoginError('Login failed', s, r)
-        if opts['--version'] >= 1:
+            soup = BeautifulSoup(r.content, "html.parser")
+            error = soup.find('ul', class_='field-errors').find('li').text
+            raise LoginError(error, s, r)
+        if opts['--verbose'] >= 1:
             print('Login successful')
             print('User.ID is %s' % (s.cookies['User.ID']))
             print('Username is %s' % (s.cookies['User.Username']))
