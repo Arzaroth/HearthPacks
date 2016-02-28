@@ -53,18 +53,14 @@ class LoginWidget(QWidget):
         self.anonCheckbox = QCheckBox('Log in as anonymous', self)
         self.anonCheckbox.stateChanged.connect(self.checkboxClicked)
 
-        loginButton = QPushButton('LoginButton', self)
-        loginButton.clicked.connect(self.submit)
-        loginButton.setAutoDefault(True)
+        self.loginButton = QPushButton('Login', self)
+        self.loginButton.clicked.connect(self.submit)
+        self.loginButton.setAutoDefault(True)
 
         loginLayout = QHBoxLayout()
         loginLayout.addStretch(1)
-        loginLayout.addWidget(loginButton)
+        loginLayout.addWidget(self.loginButton)
         loginLayout.addStretch(1)
-
-        self.loadingBar = QProgressBar()
-        self.loadingBar.setRange(0, 0)
-        self.loadingBar.hide()
 
         vbox = QVBoxLayout()
         vbox.addStretch(1)
@@ -73,7 +69,6 @@ class LoginWidget(QWidget):
         vbox.addWidget(self.passwordEdit)
         vbox.addWidget(self.anonCheckbox)
         vbox.addLayout(loginLayout)
-        vbox.addWidget(self.loadingBar)
         vbox.addStretch(1)
 
         self.setLayout(vbox)
@@ -93,13 +88,17 @@ class LoginWidget(QWidget):
             self.loginThread.login(email, password, anonymous)
 
     def disable(self):
-        self.loadingBar()
-        self.setEnabled(False)
+        self.emailEdit.setEnabled(False)
+        self.passwordEdit.setEnabled(False)
+        self.anonCheckbox.setEnabled(False)
+        self.loginButton.setEnabled(False)
         QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
     def restore(self):
-        self.loadingBar.show()
-        self.setEnabled(True)
+        self.emailEdit.setEnabled(True)
+        self.passwordEdit.setEnabled(True)
+        self.anonCheckbox.setEnabled(True)
+        self.loginButton.setEnabled(True)
         QApplication.restoreOverrideCursor()
 
     def loginSuccesfull(self, session):
