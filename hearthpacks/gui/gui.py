@@ -3,11 +3,12 @@
 #
 # File: gui.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import absolute_import
 
+import signal
 from PyQt5.QtWidgets import QApplication
 from hearthpacks.gui.login import LoginWindow
 

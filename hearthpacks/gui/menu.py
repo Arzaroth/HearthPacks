@@ -3,7 +3,7 @@
 #
 # File: menu.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import absolute_import, division
@@ -12,7 +12,7 @@ import math
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPen, QPalette, QBrush, QColor
-from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QWidget
 
 class MenuWindow(QMainWindow):
     def __init__(self):
@@ -23,11 +23,11 @@ class MenuWindow(QMainWindow):
         exitAction = QAction('&Exit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(qApp.quit)
-        self.statusBar()
+        exitAction.triggered.connect(QApplication.instance().quit)
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('&File')
         fileMenu.addAction(exitAction)
+        self.setWindowTitle("HearthPacks")
         self.setGeometry(300, 300, 300, 250)
 
 
@@ -44,6 +44,7 @@ class LoadingOverlay(QWidget):
         painter = QPainter()
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(event.rect(), QBrush(QColor(127, 127, 127, 127)))
         painter.setPen(QPen(Qt.NoPen))
 
         for i in range(6):

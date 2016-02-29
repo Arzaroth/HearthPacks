@@ -3,22 +3,17 @@
 #
 # File: hearthpacks.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import print_function, absolute_import, unicode_literals
 
 import sys
 import json
-import time
-from retry import retry
 from docopt import docopt
 from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
-from hearthpacks import login, LoginError
-from hearthpacks import PackOpener, PackError
-from hearthpacks import Gui
-from hearthpacks.utils import InterruptedHandlerGenerator
+from hearthpacks import Gui, Console
 
 INTRO = """HearthPacks.py {ver}
 Spam pack opening of HearthPwn.com to get the best score possible.
@@ -116,31 +111,10 @@ if __name__ == '__main__':
         opts = parse_args()
     except (SchemaError, json.decoder.JSONDecodeError) as e:
         print('Error: %s' % (str(e)), file=sys.stderr)
-        sys.exit(1)
+        ret = 1
     else:
         if opts['--gui']:
-            sys.exit(Gui(opts).run())
-        try:
-            session = login(opts)
-            pack_opener = PackOpener(opts, session)
-            for i in InterruptedHandlerGenerator(range(opts['--attempts'])):
-                pack_opener.open_pack()
-                time.sleep(opts['--wait'])
-            if opts['--version'] >= 1:
-                print('The best pack is:')
-                print(pack)
-            if pack_opener.best_pack.score > 0:
-                pack_opener.save_pack("Best pack")
-        except LoginError as e:
-            print(e, file=sys.stderr)
-            sys.exit(2)
-        except PackError as e:
-            print(e, file=sys.stderr)
-            if pack_opener.best_pack.score > 0:
-                if opts['--verbose'] >= 1:
-                    print("Trying to submit best pack before error:")
-                    print(e.pack)
-                @retry(PackError, tries=5, delay=2)
-                def save_pack():
-                    pack_opener.save_pack("Best pack")
-    sys.exit(0)
+            ret = Gui(opts).run()
+        else:
+            ret = Console(opts).run()
+    sys.exit(ret)

@@ -3,7 +3,7 @@
 #
 # File: utils.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import absolute_import
@@ -37,7 +37,7 @@ class InterruptedHandlerGenerator(object):
             return next(self.iterable)
         except StopIteration as e:
             self.release()
-            raise e
+            raise
 
     def release(self):
         if self.released:

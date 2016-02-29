@@ -3,13 +3,14 @@
 #
 # File: __init__.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import absolute_import
 
 from hearthpacks.login import login, LoginError
 from hearthpacks.packs import PackOpener, PackError
+from hearthpacks.console import Console
 from hearthpacks.gui import Gui
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     'LoginError',
     'PackOpener',
     'PackError',
+    'Console',
     'Gui',
 ]

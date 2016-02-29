@@ -3,7 +3,7 @@
 #
 # File: login.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 from __future__ import absolute_import
@@ -20,8 +20,8 @@ from hearthpacks.gui.menu import MenuWindow, LoadingOverlay
 class LoginWidget(QWidget):
     loginDone = QtCore.pyqtSignal(requests.Session)
 
-    def __init__(self, opts, parent):
-        QWidget.__init__(self, parent)
+    def __init__(self, opts, parent=None):
+        QWidget.__init__(self, parent=None)
         self.opts = opts
         self.initThread()
         self.initUI()
@@ -120,7 +120,6 @@ class LoginWidget(QWidget):
 class LoginWindow(MenuWindow):
     def __init__(self, opts):
         MenuWindow.__init__(self)
-        self.setWindowTitle("Login")
         self.login = LoginWidget(opts, self)
         self.setCentralWidget(self.login)
 
@@ -131,21 +130,27 @@ class LoginThread(QtCore.QThread):
 
     def __init__(self, opts):
         QtCore.QThread.__init__(self)
+        self.mutex = QtCore.QMutex()
         self.opts = opts
 
     def login(self, email, password, anonymous):
+        locker = QtCore.QMutexLocker(self.mutex)
         self.email = email
         self.password = password
         self.anonymous = anonymous
-        self.start()
+        if not self.isRunning():
+            self.start()
 
     def run(self):
         try:
-            session = login(dict(self.opts, **{
+            self.mutex.lock()
+            opts = dict(self.opts, **{
                 'email': self.email,
                 'password': self.password,
                 '--anonymous': self.anonymous,
-            }))
+            })
+            self.mutex.unlock()
+            session = login(opts)
             self.loginSuccesfull.emit(session)
         except LoginError as e:
             self.loginFailed.emit(e)

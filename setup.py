@@ -3,18 +3,18 @@
 #
 # File: setup.py
 # by Arzaroth Lekva
-# arzaroth@arzaroth.com
+# lekva@arzaroth.com
 #
 
 
 from __future__ import print_function, absolute_import
 
-import os
-from setuptools import setup, find_packages
 
-VERSION = ("v3", "0", "1")
+VERSION = ("v3", "1", "0")
 
 if __name__ == '__main__':
+    import os
+    from setuptools import setup, find_packages
     setup(
         name='HearthPacks',
         version='.'.join(VERSION),
