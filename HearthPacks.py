@@ -11,12 +11,14 @@ from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import json
 import time
+from retry import retry
 from docopt import docopt
 from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
 from hearthpacks import login, LoginError
-from hearthpacks import open_packs, save_pack, PackError
+from hearthpacks import PackOpener, PackError
 from hearthpacks import Gui
+from hearthpacks.utils import InterruptedHandlerGenerator
 
 INTRO = """HearthPacks.py {ver}
 Spam pack opening of HearthPwn.com to get the best score possible.
@@ -34,25 +36,27 @@ Usage:
 
 Arguments:
   PACK_TYPE                             Type of packs to be opened,
-                                        case insensitive, see Notes.
+                                        case insensitive, see Notes
 
 Options:
-  -n, --anonymous                       Open and save packs as anonymous.
-  -g, --gui                             Open in GUI mode.
-  -c FILE, --config=FILE                Path to configuration file, see Notes.
+  -n, --anonymous                       Open and save packs as anonymous
+  -g, --gui                             Open in GUI mode
+  -c FILE, --config=FILE                Path to configuration file, see Notes
   -a NUMBER, --attempts=NUMBER          Number of attemps to get the best pack
-                                        [default: 1000].
-  -s NUMBER, --score=NUMBER             Minimum score to consider pack
-                                        [default: 25000].
+                                        [default: 1000]
+  -s NUMBER, --score=NUMBER             Minimum score to consider pack, if
+                                        negative then packs will only be
+                                        submitted through threshold
+                                        [default: 25000]
   -t NUMBER, --threshold=NUMBER         Score needed to auto-submit good pack
-                                        [default: 50000].
+                                        [default: 50000]
   -l NUMBER, --low-threshold=NUMBER     Score needed to auto-submit bad pack
-                                        [default: 60].
+                                        [default: 60]
   -w SECONDS, --wait=SECONDS            Number of seconds between two packs
-                                        opening [default: 2].
-  -v, --verbose                         Print more text.
-  -V, --version                         Show version number.
-  -h, --help                            Show this help and exit.
+                                        opening [default: 2]
+  -v, --verbose                         Print more text
+  -V, --version                         Show version number
+  -h, --help                            Show this help and exit
 
 Notes:
   There are currently two pack types supported, wild and tgt.
@@ -87,8 +91,8 @@ def parse_args():
         And(Use(int), lambda n: n > 0,
             error='--attempts must be a strictly positive integer'),
         Optional('--score'):
-        And(Use(int), lambda n: n >= 0,
-            error='--score must be a positive integer'),
+        And(Use(int),
+            error='--score must be an integer'),
         Optional('--threshold'):
         And(Use(int), lambda n: n >= 0,
             error='--threshold must be a positive integer'),
@@ -118,19 +122,25 @@ if __name__ == '__main__':
             sys.exit(Gui(opts).run())
         try:
             session = login(opts)
-            pack = open_packs(opts, session)
-            print('The best pack is:')
-            print(pack)
-            save_pack(opts, pack, session, "Best pack")
+            pack_opener = PackOpener(opts, session)
+            for i in InterruptedHandlerGenerator(range(opts['--attempts'])):
+                pack_opener.open_pack()
+                time.sleep(opts['--wait'])
+            if opts['--version'] >= 1:
+                print('The best pack is:')
+                print(pack)
+            if pack_opener.best_pack.score > 0:
+                pack_opener.save_pack("Best pack")
         except LoginError as e:
             print(e, file=sys.stderr)
             sys.exit(2)
         except PackError as e:
             print(e, file=sys.stderr)
-            if e.pack and e.pack.score:
-                print('Waiting 10 secs to submit...')
-                time.sleep(10)
-                print('Save best pack before error:')
-                print(e.pack)
-                save_pack(opts, e.pack, session, "Best pack")
+            if pack_opener.best_pack.score > 0:
+                if opts['--verbose'] >= 1:
+                    print("Trying to submit best pack before error:")
+                    print(e.pack)
+                @retry(PackError, tries=5, delay=2)
+                def save_pack():
+                    pack_opener.save_pack("Best pack")
     sys.exit(0)

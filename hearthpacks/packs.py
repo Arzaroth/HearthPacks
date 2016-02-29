@@ -9,10 +9,8 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
 import sys
-import time
 import requests
 from bs4 import BeautifulSoup
-from hearthpacks.utils import InterruptedHandlerGenerator
 
 try:
     input = raw_input
@@ -27,9 +25,7 @@ PACKS_ENDPOINT = "http://www.hearthpwn.com/packs/save"
 
 class PackError(Exception):
     """Pack error exception class."""
-    def __init__(self, msg, pack=None):
-        Exception.__init__(self, msg)
-        self.pack = pack
+    pass
 
 
 class Card(object):
@@ -71,70 +67,79 @@ class Pack(object):
         return "Score: %s\nCards: %s" % (self.score, ", ".join(map(str, self.cards)))
 
 
-def submit_threshold(opts, pack, session, i):
-    if pack.score >= opts['--threshold']:
-        print('Pack has reached the threshold, pack is:')
-        print(pack)
-        save_pack(opts, pack, session, "Threshold %d" % (i))
+class PackOpener(object):
+    def __init__(self, opts, session):
+        self.opts = opts
+        self.session = session
+        self.best_pack = Pack()
+        self.counter = 0
 
-def submit_low(opts, pack, session, i):
-    if pack.score <= opts['--low-threshold']:
-        print('Pack is below low threshold, is:')
-        print(pack)
-        save_pack(opts, pack, session, "Low Threshold %d" % (i))
+    def submit_threshold(self, pack):
+        if pack.score >= self.opts['--threshold']:
+            if self.opts['--verbose'] >= 1:
+                print('Pack has reached the threshold, pack is:')
+                print(pack)
+            self.save_pack(pack, "Threshold")
 
-def open_packs(opts, session):
-    """Open packs from HearthPwn.com using request.Session object retrieved from login.
-Returns the requests.Request object with the best pack.
-Raise a PackError if no pack is good enough."""
-    best_pack = Pack()
-    for i in InterruptedHandlerGenerator(range(1, opts['--attempts'] + 1)):
+    def submit_low(self, pack):
+        if pack.score <= self.opts['--low-threshold']:
+            if self.opts['--verbose'] >= 1:
+                print('Pack is below low threshold, is:')
+                print(pack)
+            self.save_pack(pack, "Low Threshold")
+
+    def open_pack(self):
+        """Open a pack from HearthPwn.com using request.Session object retrieved from login.
+Raise a PackError if the pack could not be retrieved."""
         try:
-            r = session.get(PACKS_FRONTPOINT[opts['PACK_TYPE']], timeout=5)
+            r = self.session.get(PACKS_FRONTPOINT[self.opts['PACK_TYPE']], timeout=5)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             r = None
         pack = Pack(r)
         if pack.score == 0:
-            raise PackError("Unable to acquire pack", best_pack)
-        if opts['--verbose'] >= 1:
-            print('Pack #%d opened, score is: %d' % (i, pack.score))
-        if (opts['--score'] and
-            pack.score > best_pack.score and
-            pack.score > opts['--score']):
-            submit_threshold(opts, best_pack, session, i)
-            best_pack = pack
-            if opts['--verbose'] >= 1:
+            raise PackError("Unable to acquire pack")
+        self.counter += 1
+        if self.opts['--verbose'] >= 1:
+            print('Pack #%d opened, score is: %d' % (self.counter, pack.score))
+        if (self.opts['--score'] != -1 and
+            pack.score > self.best_pack.score and
+            pack.score > self.opts['--score']):
+            self.submit_threshold(self.best_pack)
+            self.best_pack = pack
+            if self.opts['--verbose'] >= 1:
                 print('New best pack found!')
-                print(best_pack)
+                print(self.best_pack)
         else:
-            submit_threshold(opts, pack, session, i)
-            submit_low(opts, pack, session, i)
-        time.sleep(opts['--wait'])
-    if best_pack.score == 0:
-        raise PackError('No pack was good enough')
-    return best_pack
+            self.submit_threshold(pack)
+            self.submit_low(pack)
 
-def save_pack(opts, pack, session, title=None):
-    """Save pack to HearthPwn.com using request.Session object retrieved from login.
+    def save_pack(self, title=None, pack=None):
+        """Save pack to HearthPwn.com using request.Session object retrieved from login.
+If no pack is provided, use current best pack.
+Raise PackError if the pack is invalid or could not be saved.
 Returns the request.Request object of the saved pack."""
-    hidden_fields = (pack.soup.find('form', class_='pack-save-form')
-                     .find_all('input', type='hidden'))
-    params = [(i['name'], i['value']) for i in hidden_fields]
-    title_tag = (pack.soup.find('form', class_='pack-save-form')
-                 .find('input', id='field-title'))
-    if not title:
-        title = input('Enter a title for the pack: ')
-    params += [(title_tag['name'], title)]
-    if opts['--verbose'] >= 2:
-        print('Save pack request params:')
-        print(params)
-    try:
-        r = session.post(PACKS_ENDPOINT, data=params, timeout=5,
-                         headers={'Referer': PACKS_FRONTPOINT[opts['PACK_TYPE']]})
-    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-        raise PackError("Unable to submit pack")
-    if r:
-        print('Save pack url: %s' % (r.url))
-    else:
-        print('Pack could not be saved', file=sys.stderr)
-    return r
+        pack = pack or self.best_pack
+        if pack.score == 0:
+            raise PackError("Invalid pack")
+        hidden_fields = (pack.soup.find('form', class_='pack-save-form')
+                         .find_all('input', type='hidden'))
+        params = [(i['name'], i['value']) for i in hidden_fields]
+        title_tag = (pack.soup.find('form', class_='pack-save-form')
+                     .find('input', id='field-title'))
+        if not title:
+            title = input('Enter a title for the pack: ')
+        params += [(title_tag['name'], title)]
+        if self.opts['--verbose'] >= 2:
+            print('Save pack request params:')
+            print(params)
+        try:
+            r = self.session.post(PACKS_ENDPOINT, data=params, timeout=5,
+                                  headers={'Referer': PACKS_FRONTPOINT[self.opts['PACK_TYPE']]})
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+            raise PackError("Unable to submit pack")
+        if self.opts['--verbose'] >= 1:
+            if r:
+                print('Save pack url: %s' % (r.url))
+            else:
+                print('Pack could not be saved', file=sys.stderr)
+        return r

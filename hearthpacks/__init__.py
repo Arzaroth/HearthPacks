@@ -9,14 +9,13 @@
 from __future__ import absolute_import
 
 from hearthpacks.login import login, LoginError
-from hearthpacks.packs import open_packs, save_pack, PackError
+from hearthpacks.packs import PackOpener, PackError
 from hearthpacks.gui import Gui
 
 __all__ = [
     'login',
     'LoginError',
-    'open_packs',
-    'save_pack',
+    'PackOpener',
     'PackError',
     'Gui',
 ]
