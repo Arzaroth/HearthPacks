@@ -41,8 +41,8 @@ Options:
                                         [default: 1000]
   -s NUMBER, --score=NUMBER             Minimum score to consider pack, if
                                         negative then packs will only be
-                                        submitted through threshold
-                                        [default: 25000]
+                                        submitted through threshold.
+                                        Ignored in GUI mode [default: 25000]
   -t NUMBER, --threshold=NUMBER         Score needed to auto-submit good pack
                                         [default: 50000]
   -l NUMBER, --low-threshold=NUMBER     Score needed to auto-submit bad pack

@@ -18,17 +18,19 @@ class MenuWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.initUI()
+        self.initMenus()
 
     def initUI(self):
+        self.fileMenu = self.menuBar().addMenu('&File')
+        self.setWindowTitle("HearthPacks")
+        self.setGeometry(300, 300, 300, 250)
+
+    def initMenus(self):
         exitAction = QAction('&Exit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
         exitAction.triggered.connect(QApplication.instance().quit)
-        menuBar = self.menuBar()
-        fileMenu = menuBar.addMenu('&File')
-        fileMenu.addAction(exitAction)
-        self.setWindowTitle("HearthPacks")
-        self.setGeometry(300, 300, 300, 250)
+        self.fileMenu.addAction(exitAction)
 
 
 class LoadingOverlay(QWidget):

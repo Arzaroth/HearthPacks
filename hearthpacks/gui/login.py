@@ -118,9 +118,12 @@ class LoginWidget(QWidget):
 
 
 class LoginWindow(MenuWindow):
+    loginDone = QtCore.pyqtSignal(requests.Session)
+
     def __init__(self, opts):
         MenuWindow.__init__(self)
         self.login = LoginWidget(opts, self)
+        self.login.loginDone.connect(lambda s: self.loginDone.emit(s))
         self.setCentralWidget(self.login)
 
 

@@ -34,6 +34,7 @@ class Card(object):
         self.golden = "is-gold" in li.attrs['class']
         href = li.find('a', class_='card-front')['href']
         self.name = href.replace('/cards/%d-' % (self.card_id), '').replace('-', ' ')
+        self.img_src = li.find('img')['src']
 
     def __str__(self):
         return self.__repr__()
@@ -49,16 +50,11 @@ class Pack(object):
             self.soup = BeautifulSoup(request.content, "html.parser")
             self.score = int(self.soup.find('span', class_='pack-score')['data-score'])
             cards_tag = self.soup.find('ul', class_='pack-results').find_all('li')
-            self._cards = (Card(li) for li in cards_tag)
+            self.cards = [Card(li) for li in cards_tag]
         else:
             self.soup = BeautifulSoup("", "html.parser")
             self.score = 0
             self._cards = ()
-
-    @property
-    def cards(self):
-        self._cards = list(self._cards)
-        return self._cards
 
     def __str__(self):
         return self.__repr__()

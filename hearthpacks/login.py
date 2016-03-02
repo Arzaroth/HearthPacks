@@ -25,13 +25,8 @@ HEADERS = {
 }
 
 class LoginError(Exception):
-    """Login error exception class.
-Contains the requests.Session and the last requests.Request used while trying to log in.
-Raise a LoginError on failure."""
-    def __init__(self, msg, session, request):
-        Exception.__init__(self, msg)
-        self.session = session
-        self.request = request
+    """Login error exception class."""
+    pass
 
 
 def login(opts):
@@ -40,7 +35,12 @@ Returns a requests.Session object."""
     s = requests.Session()
     s.headers.update(HEADERS)
     if not opts['--anonymous']:
-        r = s.get(LOGIN_FRONTPOINT)
+        try:
+            r = s.get(LOGIN_FRONTPOINT)
+        except requests.ConnectionError as e:
+            r = None
+        if not r:
+            raise LoginError("Unable to connect")
         email = (opts["email"] if "email" in opts
                  else input('Enter your email address: '))
         password = (opts["password"] if "password" in opts
@@ -58,7 +58,7 @@ Returns a requests.Session object."""
         if not 'User.ID' in s.cookies:
             soup = BeautifulSoup(r.content, "html.parser")
             error = soup.find('ul', class_='field-errors').find('li').text
-            raise LoginError(error, s, r)
+            raise LoginError(error)
         if opts['--verbose'] >= 1:
             print('Login successful')
             print('User.ID is %s' % (s.cookies['User.ID']))
