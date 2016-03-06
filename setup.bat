@@ -1,0 +1,1 @@
+pyinstaller --clean HearthPacks.spec

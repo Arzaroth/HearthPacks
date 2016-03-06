@@ -9,7 +9,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
 import sys
-import json
+import simplejson
 from docopt import docopt
 from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
@@ -35,7 +35,7 @@ Arguments:
 
 Options:
   -n, --anonymous                       Open and save packs as anonymous
-  -g, --gui                             Open in GUI mode
+  -g, --no-gui                          Open in console mode
   -c FILE, --config=FILE                Path to configuration file, see Notes
   -a NUMBER, --attempts=NUMBER          Number of attemps to get the best pack
                                         [default: 1000]
@@ -102,20 +102,20 @@ def parse_args():
     opts = schema.validate(opts)
     opts['PACK_TYPE'] = opts['PACK_TYPE'].lower() if opts['PACK_TYPE'] else "wild"
     if opts['--config']:
-        config = json.loads(opts['--config'].read())
+        config = simplejson.loads(opts['--config'].read())
         opts.update(config)
     return opts
 
 if __name__ == '__main__':
     try:
         opts = parse_args()
-    except (SchemaError, json.decoder.JSONDecodeError) as e:
+    except (SchemaError, simplejson.decoder.JSONDecodeError) as e:
         print('Error: %s' % (str(e)), file=sys.stderr)
         ret = 1
     else:
-        if opts['--gui']:
+        if opts['--no-gui']:
+            ret = Console(opts).run()
+        else:
             from hearthpacks.gui import Gui
             ret = Gui(opts).run()
-        else:
-            ret = Console(opts).run()
     sys.exit(ret)
