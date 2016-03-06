@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-import os
+import shutil
 import tempfile
 try:
     from PyQt5 import QtCore, QtGui
@@ -155,6 +155,10 @@ class PackOpenerWidget(QWidget):
     def go(self):
         self.goButton.hide()
         self.stopButton.show()
+        self.attemptsSpin.setEnabled(False)
+        self.highThresholdSpin.setEnabled(False)
+        self.lowThresholdSpin.setEnabled(False)
+        self.packTypeCombobox.setEnabled(False)
         self.count = 0
         opts = dict(self.opts, **{
             '--attempts': self.attemptsSpin.value(),
@@ -168,6 +172,10 @@ class PackOpenerWidget(QWidget):
     def stop(self):
         self.stopButton.hide()
         self.goButton.show()
+        self.attemptsSpin.setEnabled(True)
+        self.highThresholdSpin.setEnabled(True)
+        self.lowThresholdSpin.setEnabled(True)
+        self.packTypeCombobox.setEnabled(True)
         self.packOpenerThread.stop()
 
     @pyqtSlot()
@@ -294,13 +302,14 @@ class ImageLoaderTaskerPool(QtCore.QObject):
         self.pool.setMaxThreadCount(5)
         self.cards = []
         self.result = {}
+        self.tmpdir = tempfile.mkdtemp()
 
     def __del__(self):
-        [os.unlink(x) for x in self.result.values()]
+        shutil.rmtree(self.tmpdir)
 
     @pyqtSlot(Card, object)
     def add_result(self, card, data):
-        with tempfile.NamedTemporaryFile(delete=False) as f:
+        with tempfile.NamedTemporaryFile(dir=self.tmpdir, delete=False) as f:
             f.write(data)
         self.result[card] = f.name
         done_cards = [i for i in self.cards if all(x in self.result.keys() for x in i)]
