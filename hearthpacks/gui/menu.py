@@ -10,9 +10,17 @@ from __future__ import absolute_import, division
 
 import math
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPen, QPalette, QBrush, QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QWidget
+try:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QPainter, QPen, QPalette, QBrush, QColor
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QWidget
+except ImportError:
+    try:
+        from PySide.QtCore import Qt
+        from PySide.QtGui import QPainter, QPen, QPalette, QBrush, QColor
+        from PySide.QtGui import QApplication, QMainWindow, QAction, QWidget
+    except ImportError:
+        raise SystemExit("PyQt5 and PySide not found. Unable to launch GUI.")
 
 class MenuWindow(QMainWindow):
     def __init__(self):

@@ -34,7 +34,24 @@ class Card(object):
         self.golden = "is-gold" in li.attrs['class']
         href = li.find('a', class_='card-front')['href']
         self.name = href.replace('/cards/%d-' % (self.card_id), '').replace('-', ' ')
-        self.img_src = li.find('img')['src']
+        if self.golden:
+            src = li.find('video')
+            self.img_src = src['data-gifurl']
+        else:
+            src = li.find('img')
+            self.img_src = src['src']
+        self.width = int(src['width'])
+        self.height = int(src['height'])
+        self._image_data = None
+
+    @property
+    def image_data(self):
+        if not self._image_data:
+            try:
+                self._image_data = requests.get(self.img_src).content
+            except requests.ConnectionError:
+                pass
+        return self._image_data
 
     def __str__(self):
         return self.__repr__()
@@ -46,6 +63,7 @@ class Card(object):
 class Pack(object):
     def __init__(self, request=None):
         self.request = request
+        self.submitted = False
         if request:
             self.soup = BeautifulSoup(request.content, "html.parser")
             self.score = int(self.soup.find('span', class_='pack-score')['data-score'])
@@ -75,18 +93,19 @@ class PackOpener(object):
             if self.opts['--verbose'] >= 1:
                 print('Pack has reached the threshold, pack is:')
                 print(pack)
-            self.save_pack(pack, "Threshold")
+            self.save_pack("Threshold", pack)
 
     def submit_low(self, pack):
         if pack.score <= self.opts['--low-threshold']:
             if self.opts['--verbose'] >= 1:
                 print('Pack is below low threshold, is:')
                 print(pack)
-            self.save_pack(pack, "Low Threshold")
+            self.save_pack("Low Threshold", pack)
 
     def open_pack(self):
         """Open a pack from HearthPwn.com using request.Session object retrieved from login.
-Raise a PackError if the pack could not be retrieved."""
+Raise a PackError if the pack could not be retrieved.
+Returns the Pack object of the opened pack."""
         try:
             r = self.session.get(PACKS_FRONTPOINT[self.opts['PACK_TYPE']], timeout=5)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
@@ -108,6 +127,7 @@ Raise a PackError if the pack could not be retrieved."""
         else:
             self.submit_threshold(pack)
             self.submit_low(pack)
+        return pack
 
     def save_pack(self, title=None, pack=None):
         """Save pack to HearthPwn.com using request.Session object retrieved from login.
@@ -133,9 +153,11 @@ Returns the request.Request object of the saved pack."""
                                   headers={'Referer': PACKS_FRONTPOINT[self.opts['PACK_TYPE']]})
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             raise PackError("Unable to submit pack")
-        if self.opts['--verbose'] >= 1:
-            if r:
+        if r:
+            pack.submitted = True
+            if self.opts['--verbose'] >= 1:
                 print('Save pack url: %s' % (r.url))
-            else:
+        else:
+            if self.opts['--verbose'] >= 1:
                 print('Pack could not be saved', file=sys.stderr)
         return r

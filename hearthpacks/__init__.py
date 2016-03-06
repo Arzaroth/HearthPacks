@@ -11,7 +11,6 @@ from __future__ import absolute_import
 from hearthpacks.login import login, LoginError
 from hearthpacks.packs import PackOpener, PackError
 from hearthpacks.console import Console
-from hearthpacks.gui import Gui
 
 __all__ = [
     'login',
@@ -19,5 +18,4 @@ __all__ = [
     'PackOpener',
     'PackError',
     'Console',
-    'Gui',
 ]

@@ -13,7 +13,7 @@ import json
 from docopt import docopt
 from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
-from hearthpacks import Gui, Console
+from hearthpacks import Console
 
 INTRO = """HearthPacks.py {ver}
 Spam pack opening of HearthPwn.com to get the best score possible.
@@ -114,6 +114,7 @@ if __name__ == '__main__':
         ret = 1
     else:
         if opts['--gui']:
+            from hearthpacks.gui import Gui
             ret = Gui(opts).run()
         else:
             ret = Console(opts).run()

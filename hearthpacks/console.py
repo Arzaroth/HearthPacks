@@ -6,6 +6,8 @@
 # lekva@arzaroth.com
 #
 
+from __future__ import print_function, absolute_import
+
 import sys
 import time
 from retry import retry
@@ -27,7 +29,7 @@ class Console(object):
                 time.sleep(self.opts['--wait'])
             if self.opts['--version'] >= 1:
                 print('The best pack is:')
-                print(pack)
+                print(pack_opener.best_pack)
             if pack_opener.best_pack.score > 0:
                 pack_opener.save_pack("Best pack")
         except LoginError as e:

@@ -55,7 +55,7 @@ Returns a requests.Session object."""
             print('Login request params:')
             print(params)
         r = s.post(LOGIN_ENDPOINT, data=params)
-        if not 'User.ID' in s.cookies:
+        if r and not 'User.ID' in s.cookies:
             soup = BeautifulSoup(r.content, "html.parser")
             error = soup.find('ul', class_='field-errors').find('li').text
             raise LoginError(error)

@@ -9,16 +9,30 @@
 from __future__ import absolute_import
 
 import requests
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import (QWidget, QSizePolicy, QApplication,
-                             QProgressBar,
-                             QLabel, QLineEdit, QPushButton, QCheckBox,
-                             QVBoxLayout, QHBoxLayout, QMessageBox)
+try:
+    from PyQt5 import QtCore, QtGui
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot
+    from PyQt5.QtWidgets import (QWidget, QSizePolicy, QApplication,
+                                 QProgressBar,
+                                 QLabel, QLineEdit, QPushButton, QCheckBox,
+                                 QVBoxLayout, QHBoxLayout, QMessageBox)
+except ImportError:
+    try:
+        from PySide import QtCore, QtGui
+        from PySide.QtCore import Signal as pyqtSignal
+        from PySide.QtCore import Slot as pyqtSlot
+        from PySide.QtGui import (QWidget, QSizePolicy, QApplication,
+                                  QProgressBar,
+                                  QLabel, QLineEdit, QPushButton, QCheckBox,
+                                  QVBoxLayout, QHBoxLayout, QMessageBox)
+    except ImportError:
+        raise SystemExit("PyQt5 and PySide not found. Unable to launch GUI.")
+
 from hearthpacks import login, LoginError
 from hearthpacks.gui.menu import MenuWindow, LoadingOverlay
 
 class LoginWidget(QWidget):
-    loginDone = QtCore.pyqtSignal(requests.Session)
+    loginDone = pyqtSignal(requests.Session)
 
     def __init__(self, opts, parent=None):
         QWidget.__init__(self, parent=None)
@@ -53,7 +67,9 @@ class LoginWidget(QWidget):
         self.passwordEdit.returnPressed.connect(self.submit)
 
         self.anonCheckbox = QCheckBox('Log in as anonymous', self)
+        self.anonCheckbox.setChecked(self.opts['--anonymous'])
         self.anonCheckbox.stateChanged.connect(self.checkboxClicked)
+        self.checkboxClicked()
 
         self.loginButton = QPushButton('Login', self)
         self.loginButton.clicked.connect(self.submit)
@@ -75,10 +91,12 @@ class LoginWidget(QWidget):
 
         self.setLayout(vbox)
 
+    @pyqtSlot()
     def checkboxClicked(self):
         self.emailEdit.setEnabled(not self.anonCheckbox.isChecked())
         self.passwordEdit.setEnabled(not self.anonCheckbox.isChecked())
 
+    @pyqtSlot()
     def submit(self):
         email = self.emailEdit.text()
         password = self.passwordEdit.text()
@@ -104,10 +122,12 @@ class LoginWidget(QWidget):
         self.overlay.hide()
         QApplication.restoreOverrideCursor()
 
+    @pyqtSlot(requests.Session)
     def loginSuccesfull(self, session):
         self.restore()
         self.loginDone.emit(session)
 
+    @pyqtSlot(LoginError)
     def loginFailed(self, error):
         self.restore()
         QMessageBox.critical(self, "Error", str(error))
@@ -118,23 +138,29 @@ class LoginWidget(QWidget):
 
 
 class LoginWindow(MenuWindow):
-    loginDone = QtCore.pyqtSignal(requests.Session)
+    loginDone = pyqtSignal(requests.Session)
 
     def __init__(self, opts):
         MenuWindow.__init__(self)
         self.login = LoginWidget(opts, self)
-        self.login.loginDone.connect(lambda s: self.loginDone.emit(s))
+        self.login.loginDone.connect(self.propagate_login)
         self.setCentralWidget(self.login)
+
+    @pyqtSlot(requests.Session)
+    def propagate_login(self, session):
+        self.loginDone.emit(session)
 
 
 class LoginThread(QtCore.QThread):
-    loginSuccesfull = QtCore.pyqtSignal(requests.Session)
-    loginFailed = QtCore.pyqtSignal(LoginError)
+    loginSuccesfull = pyqtSignal(requests.Session)
+    loginFailed = pyqtSignal(LoginError)
 
     def __init__(self, opts):
         QtCore.QThread.__init__(self)
         self.mutex = QtCore.QMutex()
         self.opts = opts
+        self.email, self.password = "", ""
+        self.anonymous = True
 
     def login(self, email, password, anonymous):
         locker = QtCore.QMutexLocker(self.mutex)
