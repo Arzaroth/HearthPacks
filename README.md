@@ -1,14 +1,14 @@
 HearthPacks
 ==============
 
-A simple tool to spam pack opening on HearthPwn.com
+A simple tool to spam pack opening on HearthPwn.com  
 
 Dependencies can be installed with the following command:
 ```
 pip install -r requirements.txt
 ```
 
-If you want to use the GUI, you mush also install PyQt5
+If you want to use the GUI, you must also install PyQt5 or PySide
 
 Basic usage:
 ```

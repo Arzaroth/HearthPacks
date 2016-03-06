@@ -10,7 +10,7 @@
 from __future__ import print_function, absolute_import
 
 
-VERSION = ("v3", "1", "0")
+VERSION = ("v3", "2", "0")
 
 if __name__ == '__main__':
     import os
