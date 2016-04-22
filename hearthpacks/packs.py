@@ -17,9 +17,11 @@ try:
 except NameError:
     pass
 
+PACKS_TYPE = ["wild", "tgt", "wog"]
 PACKS_FRONTPOINT = {
     'wild': "http://www.hearthpwn.com/packs/simulator/1-hearthpwn-wild-pack",
     'tgt': "http://www.hearthpwn.com/packs/simulator/2-hearthstone-tgt",
+    'wog': "http://www.hearthpwn.com/packs/simulator/3-hearthstone-old-gods",
 }
 PACKS_ENDPOINT = "http://www.hearthpwn.com/packs/save"
 

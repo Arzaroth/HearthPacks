@@ -31,6 +31,7 @@ except ImportError:
 
 from hearthpacks import PackOpener, PackError
 from hearthpacks.packs import Pack, Card
+from hearthpacks.packs import PACKS_TYPE
 from hearthpacks.gui.menu import MenuWindow, LoadingOverlay
 
 class PackOpenerWidget(QWidget):
@@ -84,9 +85,9 @@ class PackOpenerWidget(QWidget):
 
         packTypeLabel = QLabel('Pack type', self)
         self.packTypeCombobox = QComboBox(self)
-        self.packTypeCombobox.addItem("wild")
-        self.packTypeCombobox.addItem("tgt")
-        self.packTypeCombobox.setCurrentIndex(["wild", "tgt"].index(self.opts['PACK_TYPE']))
+        for pack_type in PACKS_TYPE:
+            self.packTypeCombobox.addItem(pack_type)
+        self.packTypeCombobox.setCurrentIndex(PACKS_TYPE.index(self.opts['PACK_TYPE']))
         packTypeGroup = QHBoxLayout()
         packTypeGroup.setAlignment(QtCore.Qt.AlignCenter)
         packTypeGroup.setSpacing(5)
@@ -119,6 +120,10 @@ class PackOpenerWidget(QWidget):
         for i in range(5):
             self.cardLabels.append(QLabel(parent=self))
             self.cardLabels[-1].hide()
+            self.cardLabels[-1].setScaledContents(True)
+            self.cardLabels[-1].setAlignment(QtCore.Qt.AlignCenter)
+            self.cardLabels[-1].setMinimumSize(1, 1)
+            self.cardLabels[-1].installEventFilter(self)
             cardGroup.addWidget(self.cardLabels[-1])
 
         midScreen = QGridLayout()
@@ -197,15 +202,27 @@ class PackOpenerWidget(QWidget):
     def images_loaded(self, result):
         self.midLabel.setText("Last submitted pack:")
         for (card, filename), label in zip(result, self.cardLabels):
+            label.card = card
             if card.golden:
                 res = QtGui.QMovie(filename)
+                label.card_data = res
                 label.setMovie(res)
                 res.start()
             else:
                 res = QtGui.QPixmap(filename)
+                label.card_data = res
                 label.setPixmap(res)
             label.show()
 
+    def eventFilter(self, source, event):
+        if (source in self.cardLabels and event.type() == QtCore.QEvent.Resize):
+            if source.card.golden:
+                source.card_data.setScaledSize(source.size())
+            else:
+                source.setPixmap(source.card_data.scaled(source.size(),
+                                                         QtCore.Qt.KeepAspectRatio,
+                                                         QtCore.Qt.SmoothTransformation))
+        return QWidget.eventFilter(self, source, event)
 
 class PackOpenerWindow(MenuWindow):
     logout = pyqtSignal()

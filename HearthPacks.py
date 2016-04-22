@@ -14,6 +14,7 @@ from docopt import docopt
 from schema import Schema, And, Or, Use, Optional, SchemaError
 from setup import VERSION
 from hearthpacks import Console
+from hearthpacks.packs import PACKS_TYPE
 
 INTRO = """HearthPacks.py {ver}
 Spam pack opening of HearthPwn.com to get the best score possible.
@@ -54,7 +55,7 @@ Options:
   -h, --help                            Show this help and exit
 
 Notes:
-  There are currently two pack types supported, wild and tgt.
+  There are currently two pack types supported, wild, tgt and wog.
   If PACK_TYPE is not supplied, it will be wild packs.
   This might change in the future as more types are added to HearthPwn.com.
 
@@ -77,8 +78,8 @@ def parse_args():
     opts = docopt(__doc__, version='.'.join(VERSION))
     schema = Schema({
         Optional('PACK_TYPE'):
-        Or(None, lambda s: s.lower() in ["wild", "tgt"],
-           error="PACK_TYPE should be wild or tgt"),
+        Or(None, lambda s: s.lower() in PACKS_TYPE,
+           error="PACK_TYPE should be either %s" % (', '.join(PACKS_TYPE))),
         Optional('--config'):
         Or(None, Use(open),
            error="--config must be a readable file"),
