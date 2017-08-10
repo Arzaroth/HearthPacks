@@ -26,6 +26,7 @@ __doc__ = """{intro}
 Usage:
   HearthPacks.py [-ngc FILE] [-v | -vv] [--attempts NUMBER] [--score NUMBER]
                  [--threshold NUMBER] [--low-threshold NUMBER]
+                 [--threshold-comment TEXT] [--low-threshold-comment TEXT]
                  [--wait SECONDS] [PACK_TYPE]
   HearthPacks.py -h
   HearthPacks.py --version
@@ -46,16 +47,22 @@ Options:
                                         Ignored in GUI mode [default: 25000]
   -t NUMBER, --threshold=NUMBER         Score needed to auto-submit good pack
                                         [default: 50000]
+  --threshold-comment=TEXT              Pack name for submitting good pack
+                                        [default: Threshold]
   -l NUMBER, --low-threshold=NUMBER     Score needed to auto-submit bad pack
                                         [default: 60]
+  --low-threshold-comment=TEXT          Pack name for submitting bad pack
+                                        [default: Low Threshold]
   -w SECONDS, --wait=SECONDS            Number of seconds between two packs
                                         opening [default: 2]
   -v, --verbose                         Print more text
+                                        Can be specified multiple times to
+                                        print event more text
   -V, --version                         Show version number
   -h, --help                            Show this help and exit
 
 Notes:
-  There are currently two pack types supported, wild, tgt and wog.
+  Currently supported pack types are {pack_types}.
   If PACK_TYPE is not supplied, it will be wild packs.
   This might change in the future as more types are added to HearthPwn.com.
 
@@ -72,7 +79,7 @@ Disclaimer:
 
 Author:
   {author}
-""".format(intro=INTRO, author=AUTHOR)
+""".format(intro=INTRO, author=AUTHOR, pack_types=', '.join(PACKS_TYPE))
 
 def parse_args():
     opts = docopt(__doc__, version='.'.join(VERSION))
