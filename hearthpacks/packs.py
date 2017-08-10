@@ -17,12 +17,17 @@ try:
 except NameError:
     pass
 
-PACKS_TYPE = ["wild", "tgt", "wog"]
 PACKS_FRONTPOINT = {
-    'wild': "http://www.hearthpwn.com/packs/simulator/1-hearthpwn-wild-pack",
-    'tgt': "http://www.hearthpwn.com/packs/simulator/2-hearthstone-tgt",
-    'wog': "http://www.hearthpwn.com/packs/simulator/3-hearthstone-old-gods",
+    'wild': "http://www.hearthpwn.com/packs/simulator/1",
+    # 'tgt': "http://www.hearthpwn.com/packs/simulator/2",
+    # 'wog': "http://www.hearthpwn.com/packs/simulator/3",
+    # 'golden-wog': "http://www.hearthpwn.com/packs/simulator/4",
+    # 'msg': "http://www.hearthpwn.com/packs/simulator/5",
+    # 'accurate-msg': "http://www.hearthpwn.com/packs/simulator/6",
+    'jtu': "http://www.hearthpwn.com/packs/simulator/7",
+    'koft': "http://www.hearthpwn.com/packs/simulator/8",
 }
+PACKS_TYPE = list(PACKS_FRONTPOINT.keys())
 PACKS_ENDPOINT = "http://www.hearthpwn.com/packs/save"
 
 class PackError(Exception):
@@ -95,14 +100,14 @@ class PackOpener(object):
             if self.opts['--verbose'] >= 1:
                 print('Pack has reached the threshold, pack is:')
                 print(pack)
-            self.save_pack("Threshold", pack)
+            self.save_pack(self.opts['--threshold-comment'], pack)
 
     def submit_low(self, pack):
         if pack.score <= self.opts['--low-threshold']:
             if self.opts['--verbose'] >= 1:
                 print('Pack is below low threshold, is:')
                 print(pack)
-            self.save_pack("Low Threshold", pack)
+            self.save_pack(self.opts['--low-threshold-comment'], pack)
 
     def open_pack(self):
         """Open a pack from HearthPwn.com using request.Session object retrieved from login.
